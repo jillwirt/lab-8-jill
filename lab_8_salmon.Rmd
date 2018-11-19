@@ -9,3 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, echo = FALSE}
+library(tidyverse)
+salmon <- read_csv("salmon_imports_copy.csv")
+salmon
+```
+
