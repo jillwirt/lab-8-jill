@@ -9,9 +9,131 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Part 1. Load tidyverse, read in data
 ```{r, echo = FALSE}
 library(tidyverse)
 salmon <- read_csv("salmon_imports_copy.csv")
 salmon
+
+```
+
+Part 2. Exploratory scatterplot
+```{r}
+salmon_scatter <- ggplot(salmon, aes(x = year, y = salmon_fresh)) +
+  geom_point()
+
+salmon_scatter
+
+# a linear regression makes sense 
+```
+
+Part 3. Linear regression in R
+```{r}
+# The general syntax for linear regression in R is:
+# model_name <- lm(y_variable ~ x_variable, data = df_name)
+
+salmon_model <- lm(salmon_fresh ~ year, data = salmon)
+salmon_model
+
+# Imports(tons) = 7550(Year) − 14982940
+
+# What does the slope mean in the context of this model?
+# salmon increases by 7550 tons each year on average
+
+# What does the y-intercept mean in the context of this model? Why is that concerning? What does this mean about extrapolating this model for past values?
+# there are -14982940 tons of imported salmon at year 0
+```
+
+Part 4. Model diagnostics
+```{r}
+plot(salmon_model)
+
+# Do residuals appear normally distributed?
+# yes? with a few outliers
+
+# Any concerns about heteroscedasticity or outliers?
+# there are three outliers, 15, 24, and 25 on the normal QQ
+
+# to view all four diagnostic plots at once and have in knitted document
+par(mfrow = c(2,2))
+plot(salmon_model)
+```
+
+Part 5. Explore model fit and significance
+```{r}
+
+summary(salmon_model)
+# Residual Standard Error: 14860 on 26 degrees of freedom
+# R^2: 0.9478
+
+# Does year significantly predict salmon imports?
+# yes?
+
+# What does the R2 value actually mean in words?
+# ~94% of the variance in salmon imports is explained by year
+
+# What proportion of the variance in salmon imports is NOT explained by year?
+# ~6% of variances is not explained by year
+```
+
+Part 6. Prepare a final graph
+```{r}
+
+
+salmon_final_graph <- ggplot(salmon, aes(x = year, y = salmon_fresh)) +
+geom_point() +
+geom_smooth(method = lm, se = TRUE, size = 0.5, color = "gray20") + #method = lm:  se = standard error
+theme_bw() +
+scale_x_continuous(expand = c(0,0), limits = c(1990, 2017)) +
+labs(x = "Year", y = "U.S. Annual Fresh Salmon Imports\n(1,000 pounds)")
+
+salmon_final_graph
+
+
+```
+
+Part 7. Make predictions using the model
+```{r}
+
+# Let’s say we want to use our model to make predictions for U.S. fresh salmon imports in years 2022, 2024, 2026 and 2028.
+
+# Option 1 (not recommended): Plug each of those years into the model equation separately to calculate the expected U.S. imports.
+# Option 2 (recommended): Create a data frame containing the ‘new values’ that you want to make predictions for, feed that into the predict() function
+
+# Let’s use Option 2. First, we’ll make a data frame called ‘new_years’ containing the sequence of years that we want to make predictions for. Notice that the column name we create is the SAME as the variable name ‘year’ that the model uses.
+
+new_years <- data.frame(year = c(2022, 2024, 2026, 2028))
+
+
+# Then feed that data frame into the predict() function, letting it know which model to use to make predictions for the new values. Include interval = “confidence” to also report the lower and upper bounds of the 95% CI for model fit at each year.
+
+future_predict <- predict(salmon_model, newdata = new_years, interval = "confidence")
+future_predict
+
+
+# Bind the prediction outcomes (those are the values in column ‘fit’) with the ‘new_years’ data to actually create a useful table of predicted imports and upper and lower CI:
+
+predictions <- data.frame(new_years, future_predict)
+predictions
+
+```
+
+Part 8. Find Pearson's r (correlation)
+```{r}
+# Use the cor.test() function to find Pearson’s r for the linear relationship described between year and salmon imports.
+
+# See ?cor.test to view R documentation in the ‘Help’ window. Notice that the default correlation is Pearson’s r. Generally, if you’re trying to explore the correlation between variable_1 and variable_2 in data frame ‘df’, the function syntax is as follows:
+
+# test_name <- cor.test(df$variable_1, df$variable_2)
+
+pearson_test <- cor.test(salmon$year, salmon$salmon_fresh)
+pearson_test
+
+# strong positive correlation because Pearson's r is 97.4% 
+
+
+
+
+
 ```
 
